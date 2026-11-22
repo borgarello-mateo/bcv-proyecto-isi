@@ -5,7 +5,18 @@
   <title>ProyectoISI</title>
 </head>
 <body>
-  <h1>Servidor Flask funcionando</h1>
-  <p>Prueba inicial del servidor web.</p>
+    <h1>Servidor Flask funcionando</h1>
+    <p>Prueba inicial del servidor web.</p>
+
+    {% if user %}
+        <p style="color: lightgreen;">Sesion iniciada como {{ user }}</p>
+        <form action="/logout" method="post">
+            <button type="submit">Cerrar sesión</button>
+        </form>
+    {% else %}
+        <a href="/login">
+            <button>Iniciar sesión</button>
+        </a>
+    {% endif %}
 </body>
 </html>
