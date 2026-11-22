@@ -1,0 +1,2 @@
+- Iniciar servidor con `uv run flask run`.
+- Correr `uv run ruff format` para formatear código.
