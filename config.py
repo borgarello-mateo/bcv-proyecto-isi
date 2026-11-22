@@ -1,7 +1,7 @@
 import os
 
 
-class Config(object):
+class Config:
     TESTING = False
 
     @staticmethod
