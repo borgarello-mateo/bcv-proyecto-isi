@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Preguntas</title>
+</head>
+<body>
+  <h1>Preguntas</h1>
+
+  {% if user %}
+    <p><a href="{{ url_for('questions.nueva_pregunta_form') }}">+ Crear nueva pregunta</a></p>
+
+    <ul>
+      {% for p in preguntas %}
+        <li>
+          <a href="{{ url_for('questions.detalle_pregunta', pregunta_id=p.id) }}">
+            #{{ p.id }} - {{ p.titulo }}
+          </a>
+          ({{ p.categoria.nombre }}) —
+          <span
+            class="fecha-utc"
+            data-utc="{{ p.fecha_creacion.isoformat() if p.fecha_creacion else '' }}"
+          >
+            {{ p.fecha_creacion.strftime('%Y-%m-%d %H:%M') if p.fecha_creacion else '' }}
+          </span>
+          {% if p.autor_email == user %}
+            | <a href="{{ url_for('questions.editar_pregunta_form', pregunta_id=p.id) }}">Editar</a>
+          {% endif %}
+        </li>
+      {% else %}
+        <li>Todavía no hay preguntas cargadas.</li>
+      {% endfor %}
+    </ul>
+
+    <br />
+    <a href="{{ url_for('users.index') }}">Volver al inicio</a>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll(".fecha-utc").forEach((el) => {
+          let valor = (el.dataset.utc || "").trim();
+          if (!valor) return;
+
+          if (!/[zZ]|[+-]\d{2}:?\d{2}$/.test(valor)) {
+            valor = valor.replace(" ", "T") + "Z";
+          }
+
+          const fecha = new Date(valor);
+          if (!Number.isNaN(fecha.getTime())) {
+            el.textContent = fecha.toLocaleString("es-AR", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+          }
+        });
+      });
+    </script>
+  {% endif %}
+</body>
+</html>

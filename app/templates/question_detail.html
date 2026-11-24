@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pregunta #{{ pregunta.id }} - {{ pregunta.titulo }}</title>
+</head>
+<body>
+  {% if user %}
+    <h1>{{ pregunta.titulo }}</h1>
+    <p><strong>ID único:</strong> #{{ pregunta.id }}</p>
+    <p><strong>Autor:</strong> {{ pregunta.autor_email }}</p>
+    <p><strong>Categoría:</strong> {{ pregunta.categoria.nombre }}</p>
+    <p>
+      <strong>Fecha de creación:</strong>
+      <span
+        class="fecha-utc"
+        data-utc="{{ pregunta.fecha_creacion.isoformat() if pregunta.fecha_creacion else '' }}"
+      >
+        {{ pregunta.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S') if pregunta.fecha_creacion else '' }}
+      </span>
+    </p>
+    {% if pregunta.fecha_actualizacion %}
+      <p>
+        <strong>Última edición:</strong>
+        <span
+          class="fecha-utc"
+          data-utc="{{ pregunta.fecha_actualizacion.isoformat() }}"
+        >
+          {{ pregunta.fecha_actualizacion.strftime('%Y-%m-%d %H:%M:%S') }}
+        </span>
+      </p>
+    {% endif %}
+    {% set etiquetas_modo = {'ambas': 'Ambas', 'ia': 'IA', 'usuarios': 'Usuarios'} %}
+    <p><strong>Preferencia de respuesta:</strong> {{ etiquetas_modo.get(pregunta.modo_respuesta, pregunta.modo_respuesta | capitalize) }}</p>
+    <p><strong>Pendiente respuesta IA:</strong> {{ 'Sí' if pregunta.pendiente_respuesta_ia else 'No' }}</p>
+
+    <p>
+      <strong>Etiquetas:</strong>
+      {% if pregunta.etiquetas %}
+        {% for tag in pregunta.etiquetas %}
+          <span>[{{ tag.nombre }}]</span>
+        {% endfor %}
+      {% else %}
+        <span>Sin etiquetas</span>
+      {% endif %}
+    </p>
+
+    <hr />
+    <div>{{ pregunta.cuerpo | safe }}</div>
+    <hr />
+
+    {% if es_autor %}
+      <div style="margin-bottom: 14px;">
+        <a href="{{ url_for('questions.editar_pregunta_form', pregunta_id=pregunta.id) }}">
+          <button type="button">Editar pregunta</button>
+        </a>
+        <form
+          action="{{ url_for('questions.eliminar_pregunta', pregunta_id=pregunta.id) }}"
+          method="post"
+          style="display: inline;"
+          onsubmit="return confirm('¿Seguro que querés eliminar esta pregunta?');"
+        >
+          <button type="submit">Eliminar pregunta</button>
+        </form>
+      </div>
+    {% endif %}
+
+    <a href="{{ url_for('questions.nueva_pregunta_form') }}">Hacer otra pregunta</a> |
+    <a href="{{ url_for('questions.listar_preguntas') }}">Ver todas las preguntas</a> |
+    <a href="{{ url_for('users.index') }}">Volver al inicio</a>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll(".fecha-utc").forEach((el) => {
+          let valor = (el.dataset.utc || "").trim();
+          if (!valor) return;
+
+          // Si el string no trae 'Z' ni offset (+/-HH:MM), se interpreta como UTC
+          if (!/[zZ]|[+-]\d{2}:?\d{2}$/.test(valor)) {
+            valor = valor.replace(" ", "T") + "Z";
+          }
+
+          const fecha = new Date(valor);
+          if (!Number.isNaN(fecha.getTime())) {
+            el.textContent = fecha.toLocaleString("es-AR", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            });
+          }
+        });
+      });
+    </script>
+  {% endif %}
+</body>
+</html>
