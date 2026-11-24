@@ -18,18 +18,20 @@ def create_app(environment="development"):
     db.init_app(app)
     migrate.init_app(app, db)
 
-    #Importar modelos
-    from .models import category, tags, user
+    # Importar modelos
+    from .models import category, tags, user, question
     from .seed import seed_defaults
 
     # Registrar bp de usuarios (ruta I)
     from .routes.auth import bp as auth_bp
     from .routes.users import bp as users_bp
     from .routes.taxonomia import bp as taxonomia_bp
+    from .routes.questions import bp as questions_bp
 
     app.register_blueprint(users_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(taxonomia_bp)
+    app.register_blueprint(questions_bp)
 
     # TODO: reemplazar con un valor secreto
     app.secret_key = "valor-no-secreto"
