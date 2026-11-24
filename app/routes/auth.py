@@ -1,10 +1,9 @@
 from flask import Blueprint, redirect, render_template, request, session, url_for
 
+from ..extensions import db
+from ..models.user import User
+
 bp = Blueprint("auth", __name__)
-
-# TODO: Conectar a sql alchemy en vez de usar en memoria
-usuarios = {}
-
 
 @bp.get("/register")
 def index_register():
@@ -20,12 +19,15 @@ def index_login():
 def register():
     email = request.form["email"].strip()
     password = request.form["password"]
+    user = db.session.get(entity=User, ident=email) 
 
-    # TODO: una vez usando sql alchemy, cambiar lógica
-    if email in usuarios:
+    if user:
         return render_template("register.html", error="Email ya usado")
 
-    usuarios[email] = password
+    # TODO: Seguridad de contraseña
+    user = User(email=email, password=password)
+    db.session.add(user)
+    db.session.commit()
 
     return redirect(url_for("auth.index_login"))
 
@@ -34,11 +36,13 @@ def register():
 def login():
     email = request.form["email"]
     password = request.form["password"]
+    user = db.session.get(entity=User, ident=email)
 
-    if email not in usuarios:
+    if user == None:
         return render_template("login.html", error="Usuario no existente")
 
-    if usuarios[email] != password:
+    # TODO: Seguridad de contraseña
+    if user.password != password:
         return render_template("login.html", error="Contraseña incorrecta")
 
     session["user"] = email
