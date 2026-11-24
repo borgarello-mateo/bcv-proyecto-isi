@@ -28,4 +28,7 @@ def create_app(environment="development"):
     # TODO: reemplazar con un valor secreto
     app.secret_key = "valor-no-secreto"
 
+    with app.app_context():
+        db.create_all()
+
     return app

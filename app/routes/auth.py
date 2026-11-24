@@ -1,9 +1,9 @@
 from flask import Blueprint, redirect, render_template, request, session, url_for
 
-bp = Blueprint("auth", __name__)
+from ..extensions import db
+from ..models.user import MAX_LENGTH, User
 
-# TODO: Conectar a sql alchemy en vez de usar en memoria
-usuarios = {}
+bp = Blueprint("auth", __name__)
 
 
 @bp.get("/register")
@@ -20,12 +20,27 @@ def index_login():
 def register():
     email = request.form["email"].strip()
     password = request.form["password"]
+    user = db.session.get(entity=User, ident=email)
 
-    # TODO: una vez usando sql alchemy, cambiar lógica
-    if email in usuarios:
+    if user:
         return render_template("register.html", error="Email ya usado")
 
-    usuarios[email] = password
+    if len(email) > MAX_LENGTH:
+        return render_template(
+            "register.html",
+            error=f"Email no debe ser más largo que {MAX_LENGTH} caracteres",
+        )
+
+    if len(password) > MAX_LENGTH:
+        return render_template(
+            "register.html",
+            error=f"Contraseña no debe ser más larga que {MAX_LENGTH} caracteres",
+        )
+
+    # TODO: Seguridad de contraseña
+    user = User(email=email, password=password)
+    db.session.add(user)
+    db.session.commit()
 
     return redirect(url_for("auth.index_login"))
 
@@ -34,11 +49,13 @@ def register():
 def login():
     email = request.form["email"]
     password = request.form["password"]
+    user = db.session.get(entity=User, ident=email)
 
-    if email not in usuarios:
+    if user == None:
         return render_template("login.html", error="Usuario no existente")
 
-    if usuarios[email] != password:
+    # TODO: Seguridad de contraseña
+    if user.password != password:
         return render_template("login.html", error="Contraseña incorrecta")
 
     session["user"] = email
