@@ -1,9 +1,10 @@
 from flask import Blueprint, redirect, render_template, request, session, url_for
 
 from ..extensions import db
-from ..models.user import User
+from ..models.user import MAX_LENGTH, User
 
 bp = Blueprint("auth", __name__)
+
 
 @bp.get("/register")
 def index_register():
@@ -19,10 +20,22 @@ def index_login():
 def register():
     email = request.form["email"].strip()
     password = request.form["password"]
-    user = db.session.get(entity=User, ident=email) 
+    user = db.session.get(entity=User, ident=email)
 
     if user:
         return render_template("register.html", error="Email ya usado")
+
+    if len(email) > MAX_LENGTH:
+        return render_template(
+            "register.html",
+            error=f"Email no debe ser más largo que {MAX_LENGTH} caracteres",
+        )
+
+    if len(password) > MAX_LENGTH:
+        return render_template(
+            "register.html",
+            error=f"Contraseña no debe ser más larga que {MAX_LENGTH} caracteres",
+        )
 
     # TODO: Seguridad de contraseña
     user = User(email=email, password=password)
