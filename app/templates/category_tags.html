@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Categorías y Etiquetas</title>
+</head>
+<body>
+    <h1>Categorías y Etiquetas</h1>
+
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
+    <h2>Nueva categoría</h2>
+    <form action="/categorias" method="post">
+        <label for="cat-nombre">Nombre</label>
+        <input type="text" name="nombre" id="cat-nombre" required>
+        <button type="submit">Agregar categoría</button>
+    </form>
+
+    <h3>Categorías disponibles</h3>
+    <ul>
+        {% for cat in categorias %}
+            <li>{{ cat.nombre }}</li>
+        {% else %}
+            <li>No hay categorías cargadas.</li>
+        {% endfor %}
+    </ul>
+
+    <hr>
+
+    <h2>Nueva etiqueta</h2>
+    <form action="/etiquetas" method="post">
+        <label for="tag-nombre">Nombre</label>
+        <input type="text" name="nombre" id="tag-nombre" required>
+        <button type="submit">Agregar etiqueta</button>
+    </form>
+
+    <h3>Etiquetas disponibles</h3>
+    <ul>
+        {% for tag in etiquetas %}
+            <li>{{ tag.nombre }}</li>
+        {% else %}
+            <li>No hay etiquetas cargadas.</li>
+        {% endfor %}
+    </ul>
+
+    <br>
+    <a href="/">Volver al inicio</a>
+</body>
+</html>
