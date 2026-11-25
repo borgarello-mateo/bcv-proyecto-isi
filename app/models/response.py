@@ -10,7 +10,7 @@ class Respuesta(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     id_pregunta = db.Column(
         db.Integer,
-        db.ForeignKey("pregunta.id"),
+        db.ForeignKey("pregunta.id", ondelete="CASCADE"),
         nullable=False
     )
     cuerpo = db.Column(db.Text, nullable=False)
@@ -39,7 +39,7 @@ class RespuestaHumano(Respuesta):
 
     email_autor = db.Column(
         db.String(MAX_EMAIL_LENGTH),
-        db.ForeignKey("user.email"),
+        db.ForeignKey("user.email", ondelete="CASCADE"),
         nullable=False
     )
     pregunta =  db.relationship(
