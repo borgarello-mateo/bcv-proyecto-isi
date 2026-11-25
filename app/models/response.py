@@ -31,7 +31,7 @@ class RespuestaIA(Respuesta):
 
     pregunta =  db.relationship(
         "Pregunta",
-        backref=db.backref("respuestas_ia", lazy=True)
+        backref=db.backref("respuestas_ia", lazy=True, cascade="all"),
     )
 
 class RespuestaHumano(Respuesta):
@@ -44,7 +44,7 @@ class RespuestaHumano(Respuesta):
     )
     pregunta =  db.relationship(
         "Pregunta",
-        backref=db.backref("respuestas_humano", lazy=True)
+        backref=db.backref("respuestas_humano", lazy=True, cascade="all"),
     )
     autor = db.relationship(
         "User",
