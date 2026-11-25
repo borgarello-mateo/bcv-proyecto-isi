@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <title>Pregunta #{{ pregunta.id }} - {{ pregunta.titulo }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+  <style>
+    #editor-container { height: 200px; background: #fff; }
+  </style>
 </head>
 <body>
   {% if user %}
@@ -71,9 +75,10 @@
 
     {% if pregunta.modo_respuesta != "ia" %}
       <h4>Hacer respuesta</h4>
-      <form action="{{ url_for('questions.responder_pregunta', pregunta_id=pregunta.id) }}" method="post">
-        <label for="cuerpo">Cuerpo</label>
-        <input type="text" name="cuerpo" id="cuerpo" required>
+      <form action="{{ url_for('questions.responder_pregunta', pregunta_id=pregunta.id) }}" method="post" id="respuesta-form">
+        <label for="cuerpo-respuesta">Detalle de la respuesta (texto enriquecido)</label>
+        <div id="editor-container"></div>
+        <input type="hidden", name="cuerpo" id="cuerpo-respuesta">
         <button type="submit">Crear respuesta</button>
       </form>
     {% endif %}
@@ -89,7 +94,7 @@
             {% endif %}
             <p>Generado automáticamente por IA</p>
             <hr>
-            <div>{{ respuesta_ia.cuerpo }}</div>
+            <div>{{ respuesta_ia.cuerpo | safe }}</div>
             <hr>
             <p>
               Creación:
@@ -109,9 +114,9 @@
               <p style="color:green;">Aceptada como respuesta válida</p>
             {% endif %}
             <p>Autor: {{ respuesta_humano.email_autor }}</p>
-            <hr>
-            <div>{{ respuesta_humano.cuerpo }}</div>
-            <hr>
+            <hr />
+            <div>{{ respuesta_humano.cuerpo | safe }}</div>
+            <hr />
             <p>
               Creación:
               <span
@@ -133,6 +138,8 @@
       {% endif %}
     </div>
 
+
+    <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll(".fecha-utc").forEach((el) => {
@@ -157,6 +164,32 @@
           }
         });
       });
+
+      // Si se cargó el elemento, ya que podría no haberse cargado si la pregunta no permite respuestas humanas
+      if (document.querySelector("#editor-container")) {
+        const quill = new Quill('#editor-container', {
+          theme: 'snow',
+          placeholder: 'Escribí tu respuesta con detalle...',
+          modules: {
+            toolbar: [
+              ['bold', 'italic', 'underline', 'strike'],
+              ['blockquote', 'code-block'],
+              [{ list: 'ordered' }, { list: 'bullet' }],
+              ['link'],
+              ['clean']
+            ]
+          }
+        });
+    
+        const cuerpoRespuesta = document.getElementById('cuerpo-respuesta');
+        if (cuerpoRespuesta.value) {
+          quill.root.innerHTML = cuerpoRespuesta.value;
+        }
+    
+        document.getElementById('respuesta-form').addEventListener('submit', function () {
+          cuerpoRespuesta.value = quill.root.innerHTML;
+        });
+      }
     </script>
   {% endif %}
 </body>

@@ -313,13 +313,12 @@ def responder_pregunta(pregunta_id: int):
         abort(403)
 
     cuerpo_html = request.form.get("cuerpo", "").strip()
-    cuerpo_text = extraer_texto_plano_html(cuerpo_html)
 
     # TODO: Mostrar error si el cuerpo esta vacio
 
     respuesta = RespuestaHumano(
         id_pregunta = pregunta.id,
-        cuerpo = cuerpo_text,
+        cuerpo = cuerpo_html,
         email_autor = autor.email
     )
     db.session.add(respuesta)
