@@ -309,6 +309,9 @@ def responder_pregunta(pregunta_id: int):
     if not pregunta:
         abort(404)
 
+    if pregunta.modo_respuesta == 'ia':
+        abort(403)
+
     cuerpo_html = request.form.get("cuerpo", "").strip()
     cuerpo_text = extraer_texto_plano_html(cuerpo_html)
 

@@ -69,12 +69,14 @@
     <a href="{{ url_for('questions.listar_preguntas') }}">Ver todas las preguntas</a> |
     <a href="{{ url_for('users.index') }}">Volver al inicio</a>
 
-    <h4>Hacer respuesta</h4>
-    <form action="{{ url_for('questions.responder_pregunta', pregunta_id=pregunta.id) }}" method="post">
-      <label for="cuerpo">Cuerpo</label>
-      <input type="text" name="cuerpo" id="cuerpo" required>
-      <button type="submit">Crear respuesta</button>
-    </form>
+    {% if pregunta.modo_respuesta != "ia" %}
+      <h4>Hacer respuesta</h4>
+      <form action="{{ url_for('questions.responder_pregunta', pregunta_id=pregunta.id) }}" method="post">
+        <label for="cuerpo">Cuerpo</label>
+        <input type="text" name="cuerpo" id="cuerpo" required>
+        <button type="submit">Crear respuesta</button>
+      </form>
+    {% endif %}
 
     <h3>Respuestas</h3>
 
