@@ -349,7 +349,14 @@ def eliminar_respuesta(respuesta_id: int):
 @login_requerido
 def verificar_respuesta(tipo: str, respuesta_id: int):
     autor = _usuario_actual()
-    tipo_respuesta = RespuestaHumano if tipo == 'humano' else RespuestaIA
+    tipos = {
+        "humano": RespuestaHumano,
+        "ia": RespuestaIA
+    }
+    if tipo not in tipos:
+        abort(404)
+    
+    tipo_respuesta = tipos[tipo]
     respuesta = db.session.get(tipo_respuesta, respuesta_id)
 
     if not respuesta:
