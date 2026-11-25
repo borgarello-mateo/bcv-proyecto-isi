@@ -1,10 +1,10 @@
 from flask import Blueprint, redirect, render_template, request, url_for
 
 from ..extensions import db
-from ..models.category import Categoria
 from ..models.category import MAX_LENGTH as MAX_CAT_LEN
-from ..models.tags import Etiqueta
+from ..models.category import Categoria
 from ..models.tags import MAX_LENGTH as MAX_TAG_LEN
+from ..models.tags import Etiqueta
 
 bp = Blueprint("taxonomia", __name__)
 

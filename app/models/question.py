@@ -1,5 +1,5 @@
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from ..extensions import db
 
@@ -40,7 +40,7 @@ class Pregunta(db.Model):
     fecha_creacion = db.Column(
         db.DateTime(timezone=True),
         nullable=False,
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
     )
     fecha_actualizacion = db.Column(
         db.DateTime(timezone=True),
@@ -95,8 +95,8 @@ class Pregunta(db.Model):
             return False
         creacion = self.fecha_creacion
         if creacion.tzinfo is None:
-            creacion = creacion.replace(tzinfo=timezone.utc)
-        horas = (datetime.now(timezone.utc) - creacion).total_seconds() / 3600
+            creacion = creacion.replace(tzinfo=UTC)
+        horas = (datetime.now(UTC) - creacion).total_seconds() / 3600
         return horas >= 24
 
     def debe_activar_agente_ia(self) -> bool:
