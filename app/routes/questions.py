@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import wraps
 
 from flask import (
@@ -19,6 +19,7 @@ from ..models.question import (
     Pregunta,
     extraer_texto_plano_html,
 )
+from ..models.response import RespuestaHumano, RespuestaIA
 from ..models.tags import Etiqueta
 from ..models.user import User
 
@@ -160,11 +161,25 @@ def detalle_pregunta(pregunta_id: int):
     pregunta = db.session.get(Pregunta, pregunta_id)
     if not pregunta:
         abort(404)
+
+    respuestas_ia = sorted(
+        pregunta.respuestas_ia, key=lambda r: r.fecha_creacion, reverse=True
+    )
+
+    respuestas_humano = sorted(
+        pregunta.respuestas_humano, key=lambda r: r.fecha_creacion, reverse=True
+    )
+
+    tiene_respuestas = len(respuestas_ia) > 0 or len(respuestas_humano) > 0
+
     return render_template(
         "question_detail.html",
         pregunta=pregunta,
         user=autor.email,
         es_autor=(pregunta.autor_email == autor.email),
+        respuestas_ia=respuestas_ia,
+        respuestas_humano=respuestas_humano,
+        tiene_respuestas=tiene_respuestas,
     )
 
 
@@ -194,7 +209,7 @@ def crear_pregunta():
     pregunta = Pregunta(
         titulo=payload["titulo"],
         cuerpo=payload["cuerpo"],
-        fecha_creacion=datetime.now(timezone.utc),
+        fecha_creacion=datetime.now(UTC),
         categoria_id=payload["categoria_id"],
         autor_email=autor.email,
         modo_respuesta=payload["modo_respuesta"],
@@ -259,7 +274,7 @@ def editar_pregunta(pregunta_id: int):
     pregunta.categoria_id = payload["categoria_id"]
     pregunta.modo_respuesta = payload["modo_respuesta"]
     pregunta.etiquetas = payload["etiquetas"]
-    pregunta.fecha_actualizacion = datetime.now(timezone.utc)
+    pregunta.fecha_actualizacion = datetime.now(UTC)
     pregunta.pendiente_respuesta_ia = pregunta.debe_activar_agente_ia()
 
     db.session.commit()
@@ -281,3 +296,72 @@ def eliminar_pregunta(pregunta_id: int):
     db.session.commit()
 
     return redirect(url_for("questions.listar_preguntas"))
+
+
+@bp.post("/preguntas/<int:pregunta_id>/responder")
+@login_requerido
+def responder_pregunta(pregunta_id: int):
+    autor = _usuario_actual()
+    pregunta = db.session.get(Pregunta, pregunta_id)
+    if not pregunta:
+        abort(404)
+
+    if pregunta.modo_respuesta == "ia":
+        abort(403)
+
+    cuerpo_html = request.form.get("cuerpo", "").strip()
+
+    # TODO: Mostrar error si el cuerpo esta vacio
+
+    respuesta = RespuestaHumano(
+        id_pregunta=pregunta.id, cuerpo=cuerpo_html, email_autor=autor.email
+    )
+    db.session.add(respuesta)
+    db.session.commit()
+
+    return redirect(url_for("questions.detalle_pregunta", pregunta_id=pregunta.id))
+
+
+@bp.post("/respuesta/<int:respuesta_id>/delete")
+@login_requerido
+def eliminar_respuesta(respuesta_id: int):
+    autor = _usuario_actual()
+    respuesta = db.session.get(RespuestaHumano, respuesta_id)
+
+    if not respuesta:
+        abort(404)
+
+    if respuesta.email_autor != autor.email:
+        abort(403)
+
+    pregunta_id = respuesta.pregunta.id
+
+    db.session.delete(respuesta)
+    db.session.commit()
+
+    return redirect(url_for("questions.detalle_pregunta", pregunta_id=pregunta_id))
+
+
+@bp.post("/respuesta/<tipo>/<int:respuesta_id>/validar")
+@login_requerido
+def verificar_respuesta(tipo: str, respuesta_id: int):
+    autor = _usuario_actual()
+    tipos = {"humano": RespuestaHumano, "ia": RespuestaIA}
+    if tipo not in tipos:
+        abort(404)
+
+    tipo_respuesta = tipos[tipo]
+    respuesta = db.session.get(tipo_respuesta, respuesta_id)
+
+    if not respuesta:
+        abort(404)
+
+    if respuesta.pregunta.autor_email != autor.email:
+        abort(403)
+
+    respuesta.aceptada = not respuesta.aceptada
+    db.session.commit()
+
+    return redirect(
+        url_for("questions.detalle_pregunta", pregunta_id=respuesta.pregunta.id)
+    )

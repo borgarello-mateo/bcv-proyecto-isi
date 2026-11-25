@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <title>Pregunta #{{ pregunta.id }} - {{ pregunta.titulo }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+  <style>
+    #editor-container { height: 200px; background: #fff; }
+  </style>
 </head>
 <body>
   {% if user %}
@@ -69,6 +73,87 @@
     <a href="{{ url_for('questions.listar_preguntas') }}">Ver todas las preguntas</a> |
     <a href="{{ url_for('users.index') }}">Volver al inicio</a>
 
+    {% if pregunta.modo_respuesta != "ia" %}
+      <h4>Hacer respuesta</h4>
+      <form action="{{ url_for('questions.responder_pregunta', pregunta_id=pregunta.id) }}" method="post" id="respuesta-form">
+        <label for="cuerpo-respuesta">Detalle de la respuesta (texto enriquecido)</label>
+        <div id="editor-container"></div>
+        <input type="hidden", name="cuerpo" id="cuerpo-respuesta">
+        <button type="submit">Crear respuesta</button>
+      </form>
+    {% endif %}
+
+    <h3>Respuestas</h3>
+
+    <div id="respuestas" style="display: flex; flex-direction: column; gap: 16px;">
+      {% if tiene_respuestas %}
+        {% for respuesta_ia in respuestas_ia %}
+          <div class="respuesta respuesta-ia">
+            {% if respuesta_ia.aceptada %}
+              <p style="color:green;">Aceptada como respuesta válida</p>
+            {% endif %}
+            <p>Generado automáticamente por IA</p>
+            <hr>
+            <div>{{ respuesta_ia.cuerpo | safe }}</div>
+            <hr>
+            <p>
+              Creación:
+              <span
+              class="fecha-utc"
+              data-utc="{{ respuesta_ia.fecha_creacion.isoformat() }}"
+              >
+                {{ respuesta_ia.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S') }}
+              </span>
+            </p>
+          </div>
+          {% if es_autor %}
+            <form action="{{ url_for('questions.verificar_respuesta', respuesta_id=respuesta_ia.id, tipo='ia')}}" method="post">
+              <button type="submit">{{ 'Invalidar respuesta' if respuesta_ia.aceptada else 'Validar respuesta' }}</button>
+            </form>
+          {% endif %}
+        {% endfor %}
+
+        {% for respuesta_humano in respuestas_humano %}
+          <div class="respuesta respuesta-humano">
+            {% if respuesta_humano.aceptada %}
+              <p style="color:green;">Aceptada como respuesta válida</p>
+            {% endif %}
+            <p>Autor: {{ respuesta_humano.email_autor }}</p>
+            <hr />
+            <div>{{ respuesta_humano.cuerpo | safe }}</div>
+            <hr />
+            <p>
+              Creación:
+              <span
+              class="fecha-utc"
+              data-utc="{{ respuesta_humano.fecha_creacion.isoformat() }}"
+              >
+                {{ respuesta_humano.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S') }}
+              </span>
+            </p>
+          </div>
+          {% if es_autor %}
+            <form action="{{ url_for('questions.verificar_respuesta', respuesta_id=respuesta_humano.id, tipo='humano')}}" method="post">
+              <button type="submit">{{ 'Invalidar respuesta' if respuesta_humano.aceptada else 'Validar respuesta' }}</button>
+            </form>
+          {% endif %}
+          {% if user == respuesta_humano.email_autor %}
+            <form 
+              action="{{ url_for('questions.eliminar_respuesta', respuesta_id=respuesta_humano.id) }}"
+              method="post"
+              onsubmit="return confirm('¿Seguro que querés eliminar esta respuesta?')"
+            >
+              <button type="submit">Eliminar respuesta</button>
+            </form>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+          <p>Esta pregunta no tiene ninguna respuesta</p>
+      {% endif %}
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll(".fecha-utc").forEach((el) => {
@@ -93,6 +178,32 @@
           }
         });
       });
+
+      // Si se cargó el elemento, ya que podría no haberse cargado si la pregunta no permite respuestas humanas
+      if (document.querySelector("#editor-container")) {
+        const quill = new Quill('#editor-container', {
+          theme: 'snow',
+          placeholder: 'Escribí tu respuesta con detalle...',
+          modules: {
+            toolbar: [
+              ['bold', 'italic', 'underline', 'strike'],
+              ['blockquote', 'code-block'],
+              [{ list: 'ordered' }, { list: 'bullet' }],
+              ['link'],
+              ['clean']
+            ]
+          }
+        });
+    
+        const cuerpoRespuesta = document.getElementById('cuerpo-respuesta');
+        if (cuerpoRespuesta.value) {
+          quill.root.innerHTML = cuerpoRespuesta.value;
+        }
+    
+        document.getElementById('respuesta-form').addEventListener('submit', function () {
+          cuerpoRespuesta.value = quill.root.innerHTML;
+        });
+      }
     </script>
   {% endif %}
 </body>
