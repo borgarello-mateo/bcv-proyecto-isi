@@ -120,6 +120,11 @@
               </span>
             </p>
           </div>
+          {% if user == respuesta_humano.email_autor %}
+            <form action="{{ url_for('questions.eliminar_respuesta', respuesta_id=respuesta_humano.id) }}" method="post">
+              <button type="submit">Eliminar respuesta</button>
+            </form>
+          {% endif %}
         {% endfor %}
       {% else %}
           <p>Esta pregunta no tiene ninguna respuesta</p>

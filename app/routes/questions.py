@@ -324,3 +324,21 @@ def responder_pregunta(pregunta_id: int):
 
     return redirect(url_for("questions.detalle_pregunta", pregunta_id=pregunta.id))
     
+@bp.post("/respuesta/<int:respuesta_id>/delete")
+@login_requerido
+def eliminar_respuesta(respuesta_id: int):
+    autor = _usuario_actual()
+    respuesta = db.session.get(RespuestaHumano, respuesta_id)
+
+    if not respuesta:
+        abort(404)
+
+    if respuesta.email_autor != autor.email:
+        abort(403)
+
+    pregunta_id = respuesta.pregunta.id
+
+    db.session.delete(respuesta)
+    db.session.commit()
+
+    return redirect(url_for("questions.detalle_pregunta", pregunta_id=pregunta_id))
