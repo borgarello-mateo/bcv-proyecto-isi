@@ -21,6 +21,7 @@ from ..models.question import (
 )
 from ..models.tags import Etiqueta
 from ..models.user import User
+from ..models.response import RespuestaHumano
 
 bp = Blueprint("questions", __name__)
 
@@ -160,11 +161,29 @@ def detalle_pregunta(pregunta_id: int):
     pregunta = db.session.get(Pregunta, pregunta_id)
     if not pregunta:
         abort(404)
+
+    respuestas_ia = sorted(
+        pregunta.respuestas_ia,
+        key=lambda r: r.fecha_creacion,
+        reverse=True
+    )
+
+    respuestas_humano = sorted(
+        pregunta.respuestas_humano,
+        key=lambda r: r.fecha_creacion,
+        reverse=True
+    )
+
+    tiene_respuestas = len(respuestas_ia) > 0 or len(respuestas_humano) > 0
+
     return render_template(
         "question_detail.html",
         pregunta=pregunta,
         user=autor.email,
         es_autor=(pregunta.autor_email == autor.email),
+        respuestas_ia=respuestas_ia,
+        respuestas_humano=respuestas_humano,
+        tiene_respuestas=tiene_respuestas
     )
 
 
@@ -281,3 +300,27 @@ def eliminar_pregunta(pregunta_id: int):
     db.session.commit()
 
     return redirect(url_for("questions.listar_preguntas"))
+
+@bp.post("/preguntas/<int:pregunta_id>/responder")
+@login_requerido
+def responder_pregunta(pregunta_id: int):
+    autor = _usuario_actual()
+    pregunta = db.session.get(Pregunta, pregunta_id)
+    if not pregunta:
+        abort(404)
+
+    cuerpo_html = request.form.get("cuerpo", "").strip()
+    cuerpo_text = extraer_texto_plano_html(cuerpo_html)
+
+    # TODO: Mostrar error si el cuerpo esta vacio
+
+    respuesta = RespuestaHumano(
+        id_pregunta = pregunta.id,
+        cuerpo = cuerpo_text,
+        email_autor = autor.email
+    )
+    db.session.add(respuesta)
+    db.session.commit()
+
+    return redirect(url_for("questions.detalle_pregunta", pregunta_id=pregunta.id))
+    

@@ -69,6 +69,63 @@
     <a href="{{ url_for('questions.listar_preguntas') }}">Ver todas las preguntas</a> |
     <a href="{{ url_for('users.index') }}">Volver al inicio</a>
 
+    <h4>Hacer respuesta</h4>
+    <form action="{{ url_for('questions.responder_pregunta', pregunta_id=pregunta.id) }}" method="post">
+      <label for="cuerpo">Cuerpo</label>
+      <input type="text" name="cuerpo" id="cuerpo" required>
+      <button type="submit">Crear respuesta</button>
+    </form>
+
+    <h3>Respuestas</h3>
+
+    <div id="respuestas" style="display: flex; flex-direction: column; gap: 16px;">
+      {% if tiene_respuestas %}
+        {% for respuesta_ia in respuestas_ia %}
+          <div class="respuesta respuesta-ia">
+            {% if respuesta_ia.aceptada %}
+              <p style="color:green;">Aceptada como respuesta válida</p>
+            {% endif %}
+            <p>Generado automáticamente por IA</p>
+            <hr>
+            <div>{{ respuesta_ia.cuerpo }}</div>
+            <hr>
+            <p>
+              Creación:
+              <span
+              class="fecha-utc"
+              data-utc="{{ respuesta_ia.fecha_creacion.isoformat() }}"
+              >
+                {{ respuesta_ia.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S') }}
+              </span>
+            </p>
+          </div>
+        {% endfor %}
+
+        {% for respuesta_humano in respuestas_humano %}
+          <div class="respuesta respuesta-humano">
+            {% if respuesta_humano.aceptada %}
+              <p style="color:green;">Aceptada como respuesta válida</p>
+            {% endif %}
+            <p>Autor: {{ respuesta_humano.email_autor }}</p>
+            <hr>
+            <div>{{ respuesta_humano.cuerpo }}</div>
+            <hr>
+            <p>
+              Creación:
+              <span
+              class="fecha-utc"
+              data-utc="{{ respuesta_humano.fecha_creacion.isoformat() }}"
+              >
+                {{ respuesta_humano.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S') }}
+              </span>
+            </p>
+          </div>
+        {% endfor %}
+      {% else %}
+          <p>Esta pregunta no tiene ninguna respuesta</p>
+      {% endif %}
+    </div>
+
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll(".fecha-utc").forEach((el) => {
