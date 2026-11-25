@@ -21,7 +21,7 @@ from ..models.question import (
 )
 from ..models.tags import Etiqueta
 from ..models.user import User
-from ..models.response import RespuestaHumano
+from ..models.response import RespuestaHumano, RespuestaIA
 
 bp = Blueprint("questions", __name__)
 
@@ -344,3 +344,21 @@ def eliminar_respuesta(respuesta_id: int):
     db.session.commit()
 
     return redirect(url_for("questions.detalle_pregunta", pregunta_id=pregunta_id))
+
+@bp.post("/respuesta/<tipo>/<int:respuesta_id>/validar")
+@login_requerido
+def verificar_respuesta(tipo: str, respuesta_id: int):
+    autor = _usuario_actual()
+    tipo_respuesta = RespuestaHumano if tipo == 'humano' else RespuestaIA
+    respuesta = db.session.get(tipo_respuesta, respuesta_id)
+
+    if not respuesta:
+        abort(404)
+
+    if respuesta.pregunta.autor_email != autor.email:
+        abort(403)
+
+    respuesta.aceptada = not respuesta.aceptada
+    db.session.commit()
+
+    return redirect(url_for("questions.detalle_pregunta", pregunta_id=respuesta.pregunta.id))
