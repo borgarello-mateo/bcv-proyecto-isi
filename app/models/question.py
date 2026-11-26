@@ -95,7 +95,7 @@ class Pregunta(db.Model):
             return False
         if self.respuestas_humano and self.modo_respuesta != "ambas":
             return False
-        if self.respuesta_ia:
+        if self.respuestas_ia:
             return False
         creacion = self.fecha_creacion
         if creacion.tzinfo is None:

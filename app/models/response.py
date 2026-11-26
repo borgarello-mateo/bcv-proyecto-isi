@@ -63,7 +63,6 @@ def obtener_strategy(clave: str | None) -> Strategy:
     return ESTRATEGIAS.get(clave.strip().lower(), ESTRATEGIAS["openai"])
 
 
-# TODO: Agregar funcionalidad strategy (hecho)
 class RespuestaIA(Respuesta):
     __tablename__ = "respuesta_ia"
 
