@@ -94,6 +94,15 @@
     </div>
 
     <div class="campo">
+      <label for="estrategia_ia">Modelo / Estrategia IA</label>
+      <select id="estrategia_ia" name="estrategia_ia">
+        <option value="openai">OpenAI</option>
+        <option value="gemini">Gemini</option>
+        <option value="modelo_local">Modelo Local</option>
+      </select>
+    </div>
+    
+    <div class="campo">
       <label for="cuerpo-input">Detalle de la pregunta (texto enriquecido) *</label>
       <div id="editor-container"></div>
       <input type="hidden" name="cuerpo" id="cuerpo-input" value="{{ form_data.get('cuerpo', '') }}" />

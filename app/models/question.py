@@ -93,6 +93,10 @@ class Pregunta(db.Model):
     def supero_24h_sin_respuesta(self) -> bool:
         if not self.fecha_creacion:
             return False
+        if self.respuestas_humano and self.modo_respuesta != "ambas":
+            return False
+        if self.respuestas_ia:
+            return False
         creacion = self.fecha_creacion
         if creacion.tzinfo is None:
             creacion = creacion.replace(tzinfo=UTC)
@@ -100,6 +104,10 @@ class Pregunta(db.Model):
         return horas >= 24
 
     def debe_activar_agente_ia(self) -> bool:
-        return self.modo_respuesta in ("ia", "ambas") and (
-            self.tiene_etiqueta_ia_help or self.supero_24h_sin_respuesta
+        if self.respuestas_humano and self.modo_respuesta != "ambas":
+            return False
+        return (
+            self.modo_respuesta in ("ia", "ambas")
+            or self.tiene_etiqueta_ia_help
+            or self.supero_24h_sin_respuesta
         )

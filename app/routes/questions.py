@@ -19,7 +19,11 @@ from ..models.question import (
     Pregunta,
     extraer_texto_plano_html,
 )
-from ..models.response import RespuestaHumano, RespuestaIA
+from ..models.response import (
+    RespuestaHumano,
+    RespuestaIA,
+    generar_respuesta_ia_si_corresponde,
+)
 from ..models.tags import Etiqueta
 from ..models.user import User
 
@@ -147,6 +151,7 @@ def _validar_y_parsear_payload(form):
 def listar_preguntas():
     autor = _usuario_actual()
     preguntas = Pregunta.query.order_by(Pregunta.fecha_creacion.desc()).all()
+    procesar_preguntas_vencidas_24h(preguntas)
     return render_template(
         "questions_list.html",
         preguntas=preguntas,
@@ -161,6 +166,8 @@ def detalle_pregunta(pregunta_id: int):
     pregunta = db.session.get(Pregunta, pregunta_id)
     if not pregunta:
         abort(404)
+
+    procesar_preguntas_vencidas_24h([pregunta])
 
     respuestas_ia = sorted(
         pregunta.respuestas_ia, key=lambda r: r.fecha_creacion, reverse=True
@@ -206,6 +213,8 @@ def crear_pregunta():
             selected_tag_ids=selected_tag_ids,
         )
 
+    estrategia_ia = request.form.get("estrategia_ia", "openai")
+
     pregunta = Pregunta(
         titulo=payload["titulo"],
         cuerpo=payload["cuerpo"],
@@ -215,9 +224,10 @@ def crear_pregunta():
         modo_respuesta=payload["modo_respuesta"],
         etiquetas=payload["etiquetas"],
     )
-    pregunta.pendiente_respuesta_ia = pregunta.debe_activar_agente_ia()
 
     db.session.add(pregunta)
+    db.session.flush()
+    generar_respuesta_ia_si_corresponde(pregunta, estrategia_ia)
     db.session.commit()
 
     return redirect(url_for("questions.detalle_pregunta", pregunta_id=pregunta.id))
@@ -365,3 +375,17 @@ def verificar_respuesta(tipo: str, respuesta_id: int):
     return redirect(
         url_for("questions.detalle_pregunta", pregunta_id=respuesta.pregunta.id)
     )
+
+
+def procesar_preguntas_vencidas_24h(preguntas):
+    hubo_cambios = False
+    for pregunta in preguntas:
+        if (
+            not pregunta.respuestas_humano
+            and not pregunta.respuestas_ia
+            and pregunta.supero_24h_sin_respuesta
+        ):
+            generar_respuesta_ia_si_corresponde(pregunta)
+            hubo_cambios = True
+    if hubo_cambios:
+        db.session.commit()
