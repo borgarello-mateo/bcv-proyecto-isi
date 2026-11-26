@@ -19,7 +19,11 @@ from ..models.question import (
     Pregunta,
     extraer_texto_plano_html,
 )
-from ..models.response import RespuestaHumano, RespuestaIA
+from ..models.response import (
+    RespuestaHumano, 
+    RespuestaIA, 
+    generar_respuesta_ia_si_corresponde
+)
 from ..models.tags import Etiqueta
 from ..models.user import User
 
@@ -206,6 +210,8 @@ def crear_pregunta():
             selected_tag_ids=selected_tag_ids,
         )
 
+    estrategia_ia = request.form.get("estrategia_ia", "openai")
+
     pregunta = Pregunta(
         titulo=payload["titulo"],
         cuerpo=payload["cuerpo"],
@@ -215,9 +221,10 @@ def crear_pregunta():
         modo_respuesta=payload["modo_respuesta"],
         etiquetas=payload["etiquetas"],
     )
-    pregunta.pendiente_respuesta_ia = pregunta.debe_activar_agente_ia()
 
     db.session.add(pregunta)
+    db.session.flush()
+    generar_respuesta_ia_si_corresponde(pregunta, estrategia_ia)
     db.session.commit()
 
     return redirect(url_for("questions.detalle_pregunta", pregunta_id=pregunta.id))
