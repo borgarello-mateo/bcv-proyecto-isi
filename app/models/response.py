@@ -1,8 +1,8 @@
 from datetime import UTC, datetime
 
 from ..extensions import db
-from .user import MAX_LENGTH as MAX_EMAIL_LENGTH
 from .question import Pregunta
+from .user import MAX_LENGTH as MAX_EMAIL_LENGTH
 
 
 # Clase abstracta, no se genera una tabla propia
