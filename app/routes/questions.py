@@ -20,9 +20,9 @@ from ..models.question import (
     extraer_texto_plano_html,
 )
 from ..models.response import (
-    RespuestaHumano, 
-    RespuestaIA, 
-    generar_respuesta_ia_si_corresponde
+    RespuestaHumano,
+    RespuestaIA,
+    generar_respuesta_ia_si_corresponde,
 )
 from ..models.tags import Etiqueta
 from ..models.user import User

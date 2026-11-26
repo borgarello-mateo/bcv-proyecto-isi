@@ -21,11 +21,13 @@ class Respuesta(db.Model):
     )
     aceptada = db.Column(db.Boolean, nullable=False, default=False)
 
+
 class Strategy:
     nombre = "Strategy"
 
-    def generar (self, pregunta: Pregunta) -> str:
-        raise NotImplementedError ("Debe implementar generar(pregunta)")
+    def generar(self, pregunta: Pregunta) -> str:
+        raise NotImplementedError("Debe implementar generar(pregunta)")
+
 
 class StrategyOpenAI(Strategy):
     nombre = "OpenAI"

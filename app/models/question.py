@@ -102,9 +102,10 @@ class Pregunta(db.Model):
         return horas >= 24
 
     def debe_activar_agente_ia(self) -> bool:
-        if self.respuesta_humano and self.modo_respuesta != "ambas":
+        if self.respuestas_humano and self.modo_respuesta != "ambas":
             return False
         return (
-            self.modo_respuesta in ("ia", "ambas") 
-            or self.tiene_etiqueta_ia_help or self.supero_24h_sin_respuesta
+            self.modo_respuesta in ("ia", "ambas")
+            or self.tiene_etiqueta_ia_help
+            or self.supero_24h_sin_respuesta
         )
